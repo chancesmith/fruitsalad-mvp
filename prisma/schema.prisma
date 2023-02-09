@@ -1,0 +1,138 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  password Password?
+  notes    Note[]
+  Client   Client[]
+}
+
+model Caseworker {
+  id    String @id @default(cuid())
+  email String @unique
+
+  // clients Client[]
+}
+
+model Client {
+  id    String @id @default(cuid())
+  email String @unique
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  createdBy User   @relation(fields: [userId], references: [id])
+  userId    String
+
+  firstName String
+  lastName  String
+
+  // caseWorker   Caseworker @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // caseWorkerId String     @unique
+}
+
+// model Doctor {
+//   id    String  @id @default(cuid())
+//   email String  @unique
+//   phone String?
+
+//   officeName   String?
+//   addressLine1 String?
+//   addressLine2 String?
+//   city         String?
+//   state        String?
+//   zip          String?
+// }
+
+// model StateWorker {
+//   id    String  @id @default(cuid())
+//   email String  @unique
+//   phone String?
+// }
+
+// model FundingSource {
+//   id   String @id @default(cuid())
+//   name String @unique
+// }
+
+// model Document {
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   startedAt   DateTime @default(now())
+//   completedAt DateTime
+// }
+
+// model Program {
+//   id   String @id @default(cuid())
+//   name String @unique
+// }
+
+// model ProgramInstance {
+//   id   String @id @default(cuid())
+//   name String @unique
+
+//   status String // @default('InProgress')
+
+//   doctor   Doctor @relation(fields: [doctorId], references: [id])
+//   doctorId String
+
+//   caseWorker   Caseworker @relation(fields: [caseWorkerId], references: [id])
+//   caseWorkerId String
+
+//   stateWorker   StateWorker @relation(fields: [stateWorkerId], references: [id])
+//   stateWorkerId String
+
+//   fundingSource   FundingSource @relation(fields: [fundingSourceId], references: [id])
+//   fundingSourceId String
+
+//   visits Visit[]
+// }
+
+// model Visit {
+//   id          String    @id @default(cuid())
+//   createdAt   DateTime
+//   updatedAt   DateTime
+//   startedAt   DateTime
+//   completedAt DateTime?
+
+//   scheduledAt DateTime
+
+//   note String?
+// }
+
+// model Intervention {
+//   id   String @id @default(cuid())
+//   name String @unique
+// }
+
+model Password {
+  hash String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @unique
+}
+
+model Note {
+  id    String @id @default(cuid())
+  title String
+  body  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+}
