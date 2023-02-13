@@ -52,3 +52,9 @@ export function deleteClient({ id }: Pick<Client, "id">) {
     where: { id },
   });
 }
+
+export function checkIfClientExists({ email }: Pick<Client, "email">) {
+  return prisma.client.findFirst({
+    where: { email },
+  });
+}

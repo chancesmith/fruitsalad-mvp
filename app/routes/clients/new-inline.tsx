@@ -2,7 +2,7 @@ import type { ActionArgs } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import * as React from "react";
-import { createClient } from "~/models/client.server";
+import { checkIfClientExists, createClient } from "~/models/client.server";
 import { requireUserId } from "~/session.server";
 
 export async function action({ request }: ActionArgs) {
@@ -36,6 +36,24 @@ export async function action({ request }: ActionArgs) {
     );
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return json(
+      { errors: { ...errors, email: "Email is not in the correct format" } },
+      { status: 400 }
+    );
+  }
+
+  const existingClient = await checkIfClientExists({ email });
+  if (existingClient) {
+    return json(
+      {
+        errors: { ...errors, email: "A client with this email already exists" },
+      },
+      { status: 400 }
+    );
+  }
+
   const client = await createClient({ firstName, lastName, email, userId });
 
   return redirect(`/clients/${client.id}`);
@@ -53,7 +71,7 @@ export default function NewClientPage() {
     } else if (actionData?.errors?.lastName) {
       lastNameRef.current?.focus();
     } else if (actionData?.errors?.email) {
-      lastNameRef.current?.focus();
+      emailRef.current?.focus();
     }
   }, [actionData]);
 
@@ -65,6 +83,12 @@ export default function NewClientPage() {
         flexDirection: "column",
         gap: 8,
         width: "100%",
+      }}
+      // blur focus on submit
+      onSubmit={() => {
+        firstNameRef.current?.blur();
+        lastNameRef.current?.blur();
+        emailRef.current?.blur();
       }}
     >
       <div>
@@ -78,31 +102,14 @@ export default function NewClientPage() {
             aria-errormessage={
               actionData?.errors?.firstName ? "firstName-error" : undefined
             }
+            aria-describedby={
+              actionData?.errors?.firstName ? "firstName-error" : undefined
+            }
           />
         </label>
         {actionData?.errors?.firstName && (
           <div className="pt-1 text-red-700" id="firstName-error">
             {actionData.errors.firstName}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="flex w-full flex-col gap-1">
-          <span>Last Name: </span>
-          <input
-            ref={lastNameRef}
-            name="lastName"
-            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
-            aria-invalid={actionData?.errors?.lastName ? true : undefined}
-            aria-errormessage={
-              actionData?.errors?.lastName ? "lastName-error" : undefined
-            }
-          />
-        </label>
-        {actionData?.errors?.lastName && (
-          <div className="pt-1 text-red-700" id="lastName-error">
-            {actionData.errors.lastName}
           </div>
         )}
       </div>
@@ -118,11 +125,37 @@ export default function NewClientPage() {
             aria-errormessage={
               actionData?.errors?.email ? "email-error" : undefined
             }
+            aria-describedby={
+              actionData?.errors?.email ? "email-error" : undefined
+            }
           />
         </label>
         {actionData?.errors?.email && (
           <div className="pt-1 text-red-700" id="email-error">
             {actionData.errors.email}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="flex w-full flex-col gap-1">
+          <span>Last Name: </span>
+          <input
+            ref={lastNameRef}
+            name="lastName"
+            className="flex-1 rounded-md border-2 border-blue-500 px-3 text-lg leading-loose"
+            aria-invalid={actionData?.errors?.lastName ? true : undefined}
+            aria-errormessage={
+              actionData?.errors?.lastName ? "lastName-error" : undefined
+            }
+            aria-describedby={
+              actionData?.errors?.lastName ? "lastName-error" : undefined
+            }
+          />
+        </label>
+        {actionData?.errors?.lastName && (
+          <div className="pt-1 text-red-700" id="lastName-error">
+            {actionData.errors.lastName}
           </div>
         )}
       </div>
